@@ -1,33 +1,82 @@
 # -*- coding: utf-8 -*-
-import pygame, random, sys, os
+import pygame
+import random
+import os
+import sys
 
-pygame.init()
+# ---------- Android env ----------
+os.environ['SDL_VIDEO_CENTERED'] = '1'
+os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')  # اگه صدا مشکل داشت
 
-# ---------- دستگاه ----------
-IS_ANDROID = ('ANDROID_ARGUMENT' in os.environ or
-              'ANDROID_ROOT' in os.environ or
-              os.path.exists('/system/build.prop'))
+try:
+    import android
+    IS_ANDROID = True
+except ImportError:
+    IS_ANDROID = False
 
-if IS_ANDROID:
+
+# ---------- Robust font loader ----------
+def make_font(size):
+    """Safe font loader for both desktop and Android."""
+    # 1) Try bundled font next to script
     try:
-        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-    except pygame.error:
-        info = pygame.display.Info()
-        screen = pygame.display.set_mode(
-            (info.current_w or 720, info.current_h or 1280),
-            pygame.FULLSCREEN)
-    WIDTH, HEIGHT = screen.get_size()
-    SCALE = max(1.0, HEIGHT / 900.0)
-else:
-    WIDTH, HEIGHT = 900, 650
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    SCALE = 1.0
+        base = os.path.dirname(os.path.abspath(__file__))
+    except Exception:
+        base = '.'
 
-def s(v):
-    return max(1, int(v * SCALE))
+    for name in ['Vazir.ttf', 'font.ttf', 'Roboto-Bold.ttf']:
+        p = os.path.join(base, name)
+        if os.path.exists(p):
+            try:
+                return pygame.font.Font(p, size)
+            except Exception:
+                pass
+
+    # 2) Try default pygame font (bundled with pygame-ce)
+    try:
+        return pygame.font.Font(None, size)
+    except Exception:
+        pass
+
+    # 3) Last resort: SysFont
+    try:
+        return pygame.font.SysFont("arial", size)
+    except Exception:
+        return pygame.font.Font(None, max(10, size))
+
+
+# ---------- Init ----------
+pygame.init()
+pygame.font.init()
+
+# ---------- Display (safe) ----------
+WIDTH, HEIGHT = 720, 1280  # sensible default
+
+try:
+    pygame.display.init()
+    if IS_ANDROID:
+        # Fullscreen native
+        try:
+            screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        except Exception:
+            screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    else:
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    WIDTH, HEIGHT = screen.get_size()
+except Exception as e:
+    print("display error:", e)
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+if WIDTH < 200 or HEIGHT < 200:
+    WIDTH, HEIGHT = 720, 1280
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 pygame.display.set_caption("Space Shooter - Ostad Naderi")
 clock = pygame.time.Clock()
+
+SCALE = max(1.0, HEIGHT / 900.0)
+def s(v):
+    return max(1, int(v * SCALE))
 
 # ---------- Colors ----------
 BLACK = (5, 8, 25)
@@ -45,45 +94,13 @@ PURPLE = (180, 80, 255)
 GRAY = (80, 90, 120)
 SHADOW = (110, 0, 0)
 
-# ---------- Font TTF ----------
-def find_ttf():
-    for p in [
-        "/system/fonts/Roboto-Bold.ttf",
-        "/system/fonts/Roboto-Regular.ttf",
-        "/system/fonts/DroidSans-Bold.ttf",
-        "/system/fonts/DroidSans.ttf",
-        "/system/fonts/NotoSans-Bold.ttf",
-        "/system/fonts/NotoSans-Regular.ttf",
-        "C:/Windows/Fonts/arialbd.ttf",
-        "C:/Windows/Fonts/arial.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/Library/Fonts/Arial.ttf",
-    ]:
-        if os.path.exists(p):
-            return p
-    return None
-
-FONT_PATH = find_ttf()
-
-def F(size):
-    if FONT_PATH:
-        try:
-            return pygame.font.Font(FONT_PATH, size)
-        except Exception:
-            pass
-    return pygame.font.Font(None, size)
-
 # ---------- Fonts ----------
-F_MID   = F(s(26))
-F_EMPH  = F(s(42))
-F_TITLE = F(s(70))
-
-# داخل بازی
-F_HUD       = F(s(18))
-F_HUD_SMALL = F(s(16))
-F_BTN       = F(s(26))
-F_BTN_ARROW = F(s(52))
+F_MID   = make_font(s(26))
+F_EMPH  = make_font(s(42))
+F_TITLE = make_font(s(70))
+F_HUD   = make_font(s(18))
+F_BTN   = make_font(s(26))
+F_BTN_ARROW = make_font(s(52))
 
 # ---------- Stars ----------
 stars = [[random.randint(0, WIDTH), random.randint(0, HEIGHT),
@@ -111,7 +128,6 @@ game_over = False
 enemy_timer = 0
 shoot_timer = 0
 
-# ---------- سطوح ----------
 LEVELS = {
     1: (s(4),  32),
     2: (s(5),  26),
@@ -120,7 +136,6 @@ LEVELS = {
     5: (s(12), 10),
 }
 
-# ---------- Buttons ----------
 BS = s(105)
 BM = s(25)
 
@@ -200,32 +215,21 @@ def draw_bullet(r):
 
 
 def draw_hud():
-    """نوار بالا - متناسب و کوچک"""
     hh = int(HEIGHT * 0.065)
     pygame.draw.rect(screen, DARK_BLUE, (0, 0, WIDTH, hh))
     pygame.draw.line(screen, PURPLE, (0, hh), (WIDTH, hh), s(2))
-
     cy = hh // 2
-
-    # SCORE - چپ‌چین (center=False) تا از لبه بیرون نزنه
     txt(f"SCORE {score}", F_HUD, WHITE, s(18), cy, center=False)
-
-    # LEVEL - وسط
     txt(f"LEVEL {level}", F_HUD, YELLOW, WIDTH // 2, cy)
-
-    # LIVES - راست
     lives_label_w = F_HUD.size("LIVES")[0]
     heart_w = s(16)
     gap = s(4)
     n = max(lives, 0)
-
     total_hearts = n * (heart_w * 2 + gap) if n > 0 else 0
     total_w = lives_label_w + s(10) + total_hearts
     start_x = WIDTH - s(15) - total_w
-
     txt("LIVES", F_HUD, WHITE, start_x, cy, center=False)
     hx = start_x + lives_label_w + s(10)
-
     for i in range(n):
         hcy = cy
         r = s(6)
@@ -307,7 +311,6 @@ while running:
 
     move_stars()
 
-    # ---------- START ----------
     if not game_started:
         screen.fill(BLACK)
         draw_stars()
@@ -333,7 +336,6 @@ while running:
         clock.tick(60)
         continue
 
-    # ---------- PLAYING ----------
     if not game_over:
         spd, dly = LEVELS[level]
 
@@ -354,7 +356,6 @@ while running:
 
         if shoot_timer > 0: shoot_timer -= 1
 
-        # spawn دشمن
         enemy_timer += 1
         if enemy_timer >= dly:
             x_max = WIDTH - EW - s(10)
@@ -367,7 +368,6 @@ while running:
         bullets = [b for b in bullets if b.bottom > hh]
         for e in enemies: e.y += spd
 
-        # برخورد تیر با دشمن
         if bullets and enemies:
             nb = []
             for b in bullets:
@@ -383,7 +383,6 @@ while running:
                     nb.append(b)
             bullets = nb
 
-        # برخورد دشمن با بازیکن / فرار به پایین
         ne = []
         for e in enemies:
             if e.colliderect(player):
@@ -397,13 +396,11 @@ while running:
 
         if lives <= 0: game_over = True
 
-        # سطح‌بندی
         if score >= 40: level = 5
         elif score >= 30: level = 4
         elif score >= 20: level = 3
         elif score >= 10: level = 2
 
-        # Draw
         screen.fill(BLACK)
         draw_stars()
         draw_player()
@@ -425,7 +422,6 @@ while running:
         draw_hud()
         draw_buttons()
 
-    # ---------- GAME OVER ----------
     else:
         screen.fill(BLACK)
         draw_stars()
@@ -450,5 +446,4 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 
-pygame.quit()
-sys.exit()
+# NOTE: no sys.exit() — just let the program end naturally
