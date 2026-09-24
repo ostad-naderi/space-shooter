@@ -4,7 +4,7 @@ package.name = spaceshooter
 package.domain = org.ostadnaderi
 
 source.dir = .
-source.include_exts = py
+source.include_exts = py,png,jpg,ttf
 version = 0.1
 
 requirements = python3,pygame-ce
@@ -18,6 +18,7 @@ android.ndk = 25b
 android.archs = arm64-v8a
 android.accept_sdk_license = True
 android.allow_backup = True
+android.log_level = 2
 
 p4a.branch = master
 
