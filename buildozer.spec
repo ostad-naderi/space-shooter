@@ -7,7 +7,7 @@ source.dir = .
 source.include_exts = py
 version = 0.1
 
-requirements = python3==3.10.12,pygame-ce
+requirements = python3,pygame-ce
 
 orientation = portrait
 fullscreen = 1
@@ -18,6 +18,8 @@ android.ndk = 25b
 android.archs = arm64-v8a
 android.accept_sdk_license = True
 android.allow_backup = True
+
+p4a.branch = master
 
 [buildozer]
 log_level = 2
