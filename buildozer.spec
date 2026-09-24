@@ -1,16 +1,16 @@
 [app]
-title = Space Shooter Ostad Naderi
+title = سفینه نادری
 package.name = spaceshooter
 package.domain = org.ostadnaderi
 
 source.dir = .
 source.include_exts = py,png,jpg,ttf
-version = 0.1
+version = 0.2
 
 requirements = python3,pygame-ce
 
 orientation = portrait
-fullscreen = 1
+fullscreen = 0
 
 android.api = 31
 android.minapi = 21
