@@ -19,8 +19,8 @@ android.accept_sdk_license = True
 android.allow_backup = True
 android.exported_activities = org.kivy.android.PythonActivity
 
-# *** tag واقعی و معتبر ***
-p4a.branch = v2023.01.01
+# *** برنچ معتبر و سازگار با پایتون ۳.۱۰ ***
+p4a.branch = v2023.09.16
 
 [buildozer]
 log_level = 2
