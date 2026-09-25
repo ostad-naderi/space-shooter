@@ -4,9 +4,9 @@ package.name = spaceshooter
 package.domain = org.ostadnaderi
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf
-version = 1.0
+version = 2.0
 
-requirements = python3,kivy==2.2.1,pygame-ce
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 0
@@ -17,10 +17,6 @@ android.ndk = 25b
 android.archs = arm64-v8a
 android.accept_sdk_license = True
 android.allow_backup = True
-android.exported_activities = org.kivy.android.PythonActivity
-
-# *** برنچ معتبر و سازگار با پایتون ۳.۱۰ ***
-p4a.branch = v2023.09.16
 
 [buildozer]
 log_level = 2
