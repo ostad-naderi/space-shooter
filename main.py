@@ -8,10 +8,8 @@ from kivy.graphics import Color, Rectangle, Ellipse, Triangle, Line
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.metrics import dp
-from kivy.vector import Vector
 import random
 
-Window.clearcolor = (0.02, 0.03, 0.1, 1)
 
 
 class GameWidget(Widget):
@@ -45,7 +43,7 @@ class GameWidget(Widget):
         Clock.schedule_interval(self.update, 1 / 60.0)
 
     def _init_stars(self):
-        w, h = Window.width, Window.height
+        w, h = max(self.width, dp(360)), max(self.height, dp(640))
         self.stars = [[random.random() * w, random.random() * h,
                        random.uniform(1, 3), random.uniform(0.5, 2)]
                       for _ in range(60)]
@@ -54,7 +52,9 @@ class GameWidget(Widget):
         w, h = self.size
         if w < 100 or h < 100:
             return
-        self.player = [w / 2 - dp(28), h - dp(220), dp(55), dp(45)]
+        player_h = dp(45)
+        player_y = max(dp(90), h - dp(220))
+        self.player = [w / 2 - dp(28), player_y, dp(55), player_h]
         bs = dp(100)
         bm = dp(25)
         self.btn_left = [bm, bm, bs, bs]
@@ -200,6 +200,9 @@ class GameWidget(Widget):
         w, h = self.width, self.height
 
         with self.canvas:
+            Color(0.02, 0.03, 0.1, 1)
+            Rectangle(pos=(0, 0), size=(w, h))
+
             # Stars
             Color(1, 1, 1, 1)
             for st in self.stars:
@@ -348,7 +351,7 @@ class GameWidget(Widget):
         self.explosions = []
         if self.player:
             self.player[0] = self.width / 2 - self.player[2] / 2
-            self.player[1] = self.height - dp(220)
+            self.player[1] = max(dp(90), self.height - dp(220))
 
 
 class GameRoot(FloatLayout):
