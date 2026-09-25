@@ -2,12 +2,11 @@
 title = سفینه نادری
 package.name = spaceshooter
 package.domain = org.ostadnaderi
-
 source.dir = .
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,wav,mp3
-version = 2.1
+source.include_exts = py,png,jpg,kv,atlas,ttf
+version = 1.0
 
-requirements = python3,kivy==2.3.0
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 0
